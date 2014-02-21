@@ -1,4 +1,4 @@
-jTable
+jPagination
 ======
 
-Adds edit, sort, and hightligh capabilities to a HTML table.
+Makes a simple html list pageable.

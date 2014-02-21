@@ -16,18 +16,18 @@
     var configMap = {
         main_html : String()
             + '<div class="jPagenation">'
-                + '<span class="prev"><a href="#"><</a></span>'
+                + '<span class="prev"><a href="#prev"><</a></span>'
                 + '<span class="first"><a href="#"></a></span>'
                 + '<span class="cont"><a href="#">...</a></span>'
                 + '<span class="pages"></span>'
                 + '<span class="cont"><a href="#">...</a></span>'
                 + '<span class="last"><a href="#"></a></span>'
-                + '<span class="next"><a href="#">></a></span>'
+                + '<span class="next"><a href="#next">></a></span>'
             + '</div>',
         listHideClass: 'page-item-hide'
     },
     settingsMap = {
-        maxPageItems: 10,
+        maxPageItems: 5,
         maxPagesDisplayed: 4,
         pageNavButtons: true,
         firstLastIndex: true
@@ -38,13 +38,22 @@
         $activeListItems: null,
         $firstListItem: null,
         $lastListItem: null,
+        $currentPage: null,
         numListItems: 0,
+        numPages: 0,
         pageIndex: 1,
-        lastPageIndex: null
+    },
+    css_map = {
+        activePage: {
+            "color" : "#aa0000"
+        },
+        nonActivePage: {
+            "color" : "#000"
+        }
     },
     jqueryMap = {},
-    setJqueryMap, setPageNav, objectCreate, extendObject,
-    configModule, initModule;
+    setJqueryMap, initPageNav, objectCreate, extendObject,
+    configModule, initModule, onNextClick, onPrevClick;
 
     //----------------- END MODULE SCOPE VARIABLES ---------------
     //------------------- BEGIN UTILITY METHODS ------------------
@@ -96,54 +105,76 @@
     };
     // End dom method /setJqueryMap/
   
-    // Begin dom method /setPageNav/
-    setPageNav = function (index) {
+    // Begin dom method /initPageNav/
+    initPageNav = function () {
         var
             i,
             endIndex
         ;
-        
-        if (!index) {
-            index = 2;
-        }
-        if (index >= stateMap.numListItems) {
-            console.log('Error: index out of bounds.\nIndex: ' + index + '\nList Item Length: ' + stateMap.numListItems);
-            return false;
-        }
 
-        endIndex = index + settingsMap.maxPagesDisplayed;
-
-        //clear pages html
-        jqueryMap.$pages.html("");
+        stateMap.numPages = stateMap.numListItems / settingsMap.maxPageItems;
+      
+        endIndex = settingsMap.maxPagesDisplayed;
 
         
-        jqueryMap.$firstPage.find('a').text("1");
-        if (stateMap.lastPageIndex >1) {
-            jqueryMap.$lastPage.find('a').text(stateMap.lastPageIndex);1
-        }
         
-        jqueryMap.$contPages.hide();
-        jqueryMap.$prevPage.hide();
-        jqueryMap.$nextPage.hide();
-        //if (stateMap.numListItems <= settingsMap.maxPageItems) {
-        //    jqueryMap.$contPages.hide();
-        //}
-        //if (stateMap.pageIndex == 1) {
-        //    jqueryMap.$contPages.hide();
-        //}
-        //if (stateMap.pageIndex >= stateMap.lastPageIndex - settingsMap.maxPagesDisplayed) {
-        //    jqueryMap.$contPages.get(1).hide();
-        //}
-        
-        for (i = index; i < endIndex && i < stateMap.lastPageIndex; i++) {
-            jqueryMap.$pages.append('<a href="#">' + i + '</a>');
+        if (stateMap.numPages > settingsMap.maxPagesDisplayed) {
+            jqueryMap.$contPages.show();
         }
+        if (stateMap.numPages > 1) {
+            jqueryMap.$prevPage.show();
+            jqueryMap.$nextPage.show();
+        }
+
+        //hide page elements that are out of our max page items count
+        stateMap.$activeListItems = jqueryMap.$list.find('li:lt(' + (stateMap.pageIndex * settingsMap.maxPageItems - 1) + ')');
+        jqueryMap.$list.find('li:gt(' + (settingsMap.maxPageItems - 1) + ')').hide();
+
+        
+        for (i = 1; i < endIndex && i <= stateMap.numPages; i++) {
+            jqueryMap.$pages.append('<a href="#'+i+'">' + i + '</a>');
+        }
+
+        //highlight the current page number
+        stateMap.pageIndex = 1;
+        stateMap.$currentPage = jqueryMap.$pages.children('a:nth-child(' + stateMap.pageIndex + ')');
+        stateMap.$currentPage.css(css_map.activePage);
     };
-    // End dom method /setPageNav/
+    // End dom method /initPageNav/
     
     //---------------------- END DOM METHODS ---------------------
     //------------------- BEGIN EVENT HANDLERS -------------------
+    onNextClick = function () {
+        if (stateMap.pageIndex == stateMap.numPages) {
+            return false;
+        }
 
+        //set current page index and style page nav
+        stateMap.pageIndex++;
+        stateMap.$currentPage.css(css_map.nonActivePage);
+        stateMap.$currentPage = jqueryMap.$pages.children('a:nth-child(' + stateMap.pageIndex + ')');
+        stateMap.$currentPage.css(css_map.activePage);
+
+        //hide page elements that are out of our max page items count
+        stateMap.$activeListItems = jqueryMap.$list.find('li:lt(' + (stateMap.pageIndex * settingsMap.maxPageItems + 1) + '):gt('+(stateMap.pageIndex - 1) * settingsMap.maxPageItems+')');
+        jqueryMap.$listItems.hide();
+        stateMap.$activeListItems.show();
+
+    };
+    onPrevClick = function () {
+        if (stateMap.pageIndex == 1) {
+            return false;
+        }
+      
+        stateMap.pageIndex--;
+        stateMap.$currentPage.css(css_map.nonActivePage);
+        stateMap.$currentPage = jqueryMap.$pages.children('a:nth-child(' + stateMap.pageIndex + ')');
+        stateMap.$currentPage.css(css_map.activePage);
+        //hide page elements that are out of our max page items count
+        stateMap.$activeListItems = jqueryMap.$list.find('li:lt(' + (stateMap.pageIndex * settingsMap.maxPageItems + 1) + '):gt(' + (stateMap.pageIndex - 1) * settingsMap.maxPageItems  +  ')');
+        jqueryMap.$listItems.hide();
+        stateMap.$activeListItems.show();
+    };
 
     //-------------------- END EVENT HANDLERS --------------------
     //-------------------- BEGIN PRIVATE METHODS------------------
@@ -189,9 +220,14 @@
         stateMap.numListItems = $list.children('li').length;
         stateMap.$lastListItem = $list.find("li:last");
         stateMap.$firstListItem = $list.find("li:first");
-        stateMap.lastPageIndex = stateMap.numListItems/settingsMap.maxPageItems;
+    
         setJqueryMap();
-        setPageNav();
+        initPageNav();
+
+        jqueryMap.$prevPage
+            .on('click', onPrevClick);
+        jqueryMap.$nextPage
+            .on('click', onNextClick);
         return true;
     };
     // End private method /initModule/
