@@ -118,9 +118,9 @@
 
         
         
-        if (stateMap.numPages > settingsMap.maxPagesDisplayed) {
-            jqueryMap.$contPages.show();
-        }
+        //if (stateMap.numPages > settingsMap.maxPagesDisplayed) {
+        //    jqueryMap.$contPages.show();
+        //}
         if (stateMap.numPages > 1) {
             jqueryMap.$prevPage.show();
             jqueryMap.$nextPage.show();
@@ -131,7 +131,7 @@
         jqueryMap.$list.find('li:gt(' + (settingsMap.maxPageItems - 1) + ')').hide();
 
         
-        for (i = 1; i < endIndex && i <= stateMap.numPages; i++) {
+        for (i = 1;/* i < endIndex &&*/ i <= stateMap.numPages; i++) {
             jqueryMap.$pages.append('<a href="#'+i+'">' + i + '</a>');
         }
 
