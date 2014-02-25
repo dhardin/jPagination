@@ -14,7 +14,7 @@
     'use strict'
     //----------------- BEGIN MODULE SCOPE VARIABLES ---------------
     var configMap = {
-        main_html : String()
+        main_html: String()
             + '<div class="jPagenation">'
                 + '<span class="prev"><a href="#prev"><</a></span>'
                 + '<span class="first"><a href="#"></a></span>'
@@ -45,15 +45,15 @@
     },
     css_map = {
         activePage: {
-            "color" : "#aa0000"
+            "color": "#aa0000"
         },
         nonActivePage: {
-            "color" : "#000"
+            "color": "#000"
         }
     },
     jqueryMap = {},
     setJqueryMap, initPageNav, objectCreate, extendObject,
-    configModule, initModule, onNextClick, onPrevClick;
+    configModule, initModule, onNextClick, onPrevClick,onPageClick, changePageIndex;
 
     //----------------- END MODULE SCOPE VARIABLES ---------------
     //------------------- BEGIN UTILITY METHODS ------------------
@@ -127,7 +127,7 @@
         }
 
         //hide page elements that are out of our max page items count
-        stateMap.$activeListItems = jqueryMap.$list.find('li:lt(' + (stateMap.pageIndex * settingsMap.maxPageItems - 1) + ')');
+        stateMap.$activeListItems = jqueryMap.$list.find('li:lt(' + (stateMap.pageIndex * settingsMap.maxPageItems ) + ')');
         jqueryMap.$list.find('li:gt(' + (settingsMap.maxPageItems - 1) + ')').hide();
 
         
@@ -145,37 +145,33 @@
     //---------------------- END DOM METHODS ---------------------
     //------------------- BEGIN EVENT HANDLERS -------------------
     onNextClick = function () {
-        if (stateMap.pageIndex == stateMap.numPages) {
-            return false;
-        }
-
-        //set current page index and style page nav
-        stateMap.pageIndex++;
-        stateMap.$currentPage.css(css_map.nonActivePage);
-        stateMap.$currentPage = jqueryMap.$pages.children('a:nth-child(' + stateMap.pageIndex + ')');
-        stateMap.$currentPage.css(css_map.activePage);
-
-        //hide page elements that are out of our max page items count
-        stateMap.$activeListItems = jqueryMap.$list.find('li:lt(' + (stateMap.pageIndex * settingsMap.maxPageItems + 1) + '):gt('+(stateMap.pageIndex - 1) * settingsMap.maxPageItems+')');
-        jqueryMap.$listItems.hide();
-        stateMap.$activeListItems.show();
-
+        changePageIndex(stateMap.pageIndex + 1);
     };
     onPrevClick = function () {
-        if (stateMap.pageIndex == 1) {
+        changePageIndex(stateMap.pageIndex - 1);
+    };
+    onPageClick = function () {
+        var pageIndex = parseInt($(this).text());
+        changePageIndex(pageIndex);
+    };
+
+    changePageIndex = function (pageIndex) {
+        if (pageIndex < 1 || pageIndex > stateMap.numPages) {
             return false;
         }
-      
-        stateMap.pageIndex--;
+
+        stateMap.pageIndex = pageIndex;
         stateMap.$currentPage.css(css_map.nonActivePage);
         stateMap.$currentPage = jqueryMap.$pages.children('a:nth-child(' + stateMap.pageIndex + ')');
         stateMap.$currentPage.css(css_map.activePage);
         //hide page elements that are out of our max page items count
-        stateMap.$activeListItems = jqueryMap.$list.find('li:lt(' + (stateMap.pageIndex * settingsMap.maxPageItems + 1) + '):gt(' + (stateMap.pageIndex - 1) * settingsMap.maxPageItems  +  ')');
+        stateMap.$activeListItems = (stateMap.pageIndex > 1
+                                        ? jqueryMap.$list.find('li:lt(' + (stateMap.pageIndex * settingsMap.maxPageItems) + '):gt(' + ((stateMap.pageIndex - 1) * settingsMap.maxPageItems - 1) + ')')
+                                        : jqueryMap.$list.find('li:lt(' + (stateMap.pageIndex * settingsMap.maxPageItems) + ')')
+                                    );
         jqueryMap.$listItems.hide();
         stateMap.$activeListItems.show();
     };
-
     //-------------------- END EVENT HANDLERS --------------------
     //-------------------- BEGIN PRIVATE METHODS------------------
     // Begin private method /configModule/
@@ -228,6 +224,8 @@
             .on('click', onPrevClick);
         jqueryMap.$nextPage
             .on('click', onNextClick);
+        jqueryMap.$pages.find('a')
+            .on('click', onPageClick);
         return true;
     };
     // End private method /initModule/
